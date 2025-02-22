@@ -1,5 +1,24 @@
 import math
 
+import tkinter as tk
+from tkinter import filedialog
+
+#YOU CAN EDIT THESE TO MATCH YOUR FUNCTIONS
+#_____________________________________________
+
+velocity = 100
+
+DRIVE_FORMAT = "driveInches({dist});"
+TURN_FORMAT = "turnInertial({rot}, {dir}, {vel});"
+
+#_____________________________________________
+
+
+
+
+
+#DEFINING FUNCTIONS
+
 def readfile(filepath):
     try:
         with open(filepath, "r") as file:
@@ -21,20 +40,29 @@ def readfile(filepath):
 
 # PROMPT FILE
 
+root = tk.Tk() # opens background tab 
+root.withdraw() # hide background tab
 
-coordsFilePath = input("Enter the file path of the text file: ")
+file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("All Files", "*.*"), ("Text Files", "*.txt")])
+
+if file_path:
+    xC, yC = readfile(file_path)
+else:
+    print("Error when selecting file.")
+
 print(" ") # Move to new line
-
-xC, yC = readfile(coordsFilePath)
 
 if xC is None or yC is None:  # Prevent further execution if file read failed
     exit()
 
-previousAngle = 0
+
+
 
 
 
 # CALCULATIONS
+
+previousAngle = 0 # Set starting angle to 0
 
 for i in range(len(xC) - 1):  # Fixed loop range to avoid index error
     deltaX = xC[i+1] - xC[i]
@@ -53,11 +81,11 @@ for i in range(len(xC) - 1):  # Fixed loop range to avoid index error
             rotation += 360
 
         if rotation < 0:
-            print("turn left for", abs(rotation), "degrees")
+            print(TURN_FORMAT.format(rot = rotation, dir = "left", vel = velocity))
         elif rotation > 0:
-            print("turn right for", rotation, "degrees")
+            print(TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity))
 
-    print("drive for", distance)
+    print(DRIVE_FORMAT.format(dist = distance))
     previousAngle = newAngle
 
 print("\n\nPath Completed")
