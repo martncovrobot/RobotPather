@@ -37,55 +37,91 @@ def readfile(filepath):
         print(f"An error occurred: {e}")
         return None, None
 
+def insertClicked():
+    text_widget.delete("1.0", tk.END)
+    file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("All Files", "*.*"), ("Text Files", "*.txt")])
+    if file_path:
+        fileLabel.config(text = file_path)
+        xC, yC = readfile(file_path)
+        if xC is None or yC is None:  # Prevent further execution if file read failed
+            exit()
+        print(" ") # Move to a new line
+        calculateInstructions(xC, yC)
+    else:
+        print("Error when selecting file.")
+        fileLabel.config(text = "Nothing Selected")
+
+def copyOutput():
+    window.clipboard_clear()  # Clear clipboard
+    window.clipboard_append(text_widget.get("1.0", tk.END))  # Copy text
+    window.update()  # Ensures clipboard updates
+
+def calculateInstructions(xC, yC):
+    previousAngle = 0 # Set starting angle to 0
+    instructionList = ""
+
+    for i in range(len(xC) - 1):  # Fixed loop range to avoid index error
+        deltaX = xC[i+1] - xC[i]
+        deltaY = yC[i+1] - yC[i]
+        distance = math.sqrt(deltaX**2 + deltaY**2)
+        newAngle = math.degrees(math.atan2(deltaY, deltaX))
+
+        if newAngle < 0:
+            newAngle += 360
+    
+        if i > 0:
+            rotation = previousAngle - newAngle
+            if rotation > 180:
+                rotation -= 360
+            if rotation < -180:
+                rotation += 360
+
+            if rotation < 0:
+                print(TURN_FORMAT.format(rot = rotation, dir = "left", vel = velocity))
+                instructionList = instructionList + TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity) + "\n"
+            elif rotation > 0:
+                print(TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity))
+                instructionList = instructionList + TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity) + "\n"
+        print(DRIVE_FORMAT.format(dist = distance))
+        instructionList = instructionList + DRIVE_FORMAT.format(dist = distance) + "\n"
+        previousAngle = newAngle
+
+    print("\n\nPath Completed")
+
+    text_widget.insert(tk.END, instructionList)
+    
+    print("\n\n\n\n\n")
+    print(instructionList)
 
 # PROMPT FILE
 
-root = tk.Tk() # opens background tab 
-root.withdraw() # hide background tab
+window = tk.Tk() # opens main window
+window.title("Robot Pather")
+window.geometry("600x400")
 
-file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("All Files", "*.*"), ("Text Files", "*.txt")])
+# creating label
+fileLabel = tk.Label(window, text="Insert Text File")
+fileLabel.config(font=("Arial", 15))
+fileLabel.pack()
 
-if file_path:
-    xC, yC = readfile(file_path)
-else:
-    print("Error when selecting file.")
+# creating button
 
-print(" ") # Move to new line
+insertButton = tk.Button(window, text="Insert", command=insertClicked)
+insertButton.pack()
 
-if xC is None or yC is None:  # Prevent further execution if file read failed
-    exit()
+# creating copy-button
+
+copyButton = tk.Button(window, text="Copy", command=copyOutput)
+copyButton.pack()
+
+# Create a Text widget
+text_widget = tk.Text(window, wrap="word", height=15, width=50)
+text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+# Create a scrollbar and attach it to the Text widget
+scrollbar = tk.Scrollbar(window, command=text_widget.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+window.mainloop()
 
 
-
-
-
-
-# CALCULATIONS
-
-previousAngle = 0 # Set starting angle to 0
-
-for i in range(len(xC) - 1):  # Fixed loop range to avoid index error
-    deltaX = xC[i+1] - xC[i]
-    deltaY = yC[i+1] - yC[i]
-    distance = math.sqrt(deltaX**2 + deltaY**2)
-    newAngle = math.degrees(math.atan2(deltaY, deltaX))
-
-    if newAngle < 0:
-        newAngle += 360
-    
-    if i > 0:
-        rotation = previousAngle - newAngle
-        if rotation > 180:
-            rotation -= 360
-        if rotation < -180:
-            rotation += 360
-
-        if rotation < 0:
-            print(TURN_FORMAT.format(rot = rotation, dir = "left", vel = velocity))
-        elif rotation > 0:
-            print(TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity))
-
-    print(DRIVE_FORMAT.format(dist = distance))
-    previousAngle = newAngle
-
-print("\n\nPath Completed")
