@@ -3,20 +3,6 @@ import math
 import tkinter as tk
 from tkinter import filedialog
 
-#YOU CAN EDIT THESE TO MATCH YOUR FUNCTIONS
-#_____________________________________________
-
-velocity = 100
-
-DRIVE_FORMAT = "driveInches({dist});"
-TURN_FORMAT = "turnInertial({rot}, {dir}, {vel});"
-
-#_____________________________________________
-
-
-
-
-
 #DEFINING FUNCTIONS
 
 def readfile(filepath):
@@ -60,6 +46,12 @@ def calculateInstructions(xC, yC):
     previousAngle = 0 # Set starting angle to 0
     instructionList = ""
 
+    DRIVE_FORMAT = format_drive.get("1.0", 'end-1c')
+    TURN_FORMAT = format_turn.get("1.0", 'end-1c')
+    velocity = format_velocity.get("1.0", 'end-1c')
+
+    error_encountered = False
+
     for i in range(len(xC) - 1):  # Fixed loop range to avoid index error
         deltaX = xC[i+1] - xC[i]
         deltaY = yC[i+1] - yC[i]
@@ -77,21 +69,32 @@ def calculateInstructions(xC, yC):
                 rotation += 360
 
             if rotation < 0:
-                print(TURN_FORMAT.format(rot = rotation, dir = "left", vel = velocity))
-                instructionList = instructionList + TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity) + "\n"
+                #print(TURN_FORMAT.format(rot = rotation, dir = "left", vel = velocity))
+                try:
+                    instructionList = instructionList + TURN_FORMAT.format(rot = rotation, dir = "left", vel = velocity) + "\n"
+                except:
+                    error_encountered = True
             elif rotation > 0:
-                print(TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity))
-                instructionList = instructionList + TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity) + "\n"
-        print(DRIVE_FORMAT.format(dist = distance))
-        instructionList = instructionList + DRIVE_FORMAT.format(dist = distance) + "\n"
+                #print(TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity))
+                try:
+                    instructionList = instructionList + TURN_FORMAT.format(rot = rotation, dir = "right", vel = velocity) + "\n"
+                except:
+                    error_encountered = True
+            #print(DRIVE_FORMAT.format(dist = distance))
+        try:
+            instructionList = instructionList + DRIVE_FORMAT.format(dist = distance, vel = velocity) + "\n"
+        except:
+            error_encountered = True
         previousAngle = newAngle
 
     print("\n\nPath Completed")
 
-    text_widget.insert(tk.END, instructionList)
-    
-    print("\n\n\n\n\n")
-    print(instructionList)
+    if(error_encountered==True):
+        text_widget.insert(tk.END, "Unknown replacement field(s).\nThe only replacement fields are:\n\tDrive:\n\t\t{dist} = distance\n\tTurn:\n\t\t{rot} = rotation in degrees\n\t\t{dir} = direction (left or right)\n\t\t{vel} = velocity")
+    else:
+        text_widget.insert(tk.END, instructionList)
+    #print("\n\n\n\n\n")
+    #print(instructionList)
 
 # PROMPT FILE
 
@@ -114,11 +117,31 @@ insertButton.pack()
 copyButton = tk.Button(window, text="Copy", command=copyOutput)
 copyButton.pack()
 
+# Formatting Labels
+
+formatDriveDefault = "driveInches({dist}, {vel});"
+formatTurnDefault = "turnInertial({rot}, {dir}, {vel});"
+velocityDefault = "100"
+
+format_velocity = tk.Text(window, height = 1, width = 8)
+format_velocity.insert(tk.END, velocityDefault)
+format_velocity.pack(expand=True)
+
+format_drive = tk.Text(window, height = 1, width = 50)
+format_drive.insert(tk.END, formatDriveDefault)
+format_drive.pack(expand=True)
+
+format_turn = tk.Text(window, height = 1, width = 50)
+format_turn.insert(tk.END, formatTurnDefault)
+format_turn.pack(expand=True)
+
 # Create a Text widget
+
 text_widget = tk.Text(window, wrap="word", height=15, width=50)
 text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 # Create a scrollbar and attach it to the Text widget
+
 scrollbar = tk.Scrollbar(window, command=text_widget.yview)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
